@@ -1,0 +1,8 @@
+# This file contains settings of df_crypt_chat that can be changed in
+# minetest.conf
+
+df_crypt_chat.prefix (Crypt Chat prefix) string ECR:
+
+df_crypt_chat.server_message_format (Crypt Chat player message format) string <@name> @message
+
+df_crypt_chat.key (Crypt Chat key) string abcedfg
