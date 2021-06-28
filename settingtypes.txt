@@ -6,3 +6,5 @@ df_crypt_chat.prefix (Crypt Chat prefix) string ECR:
 df_crypt_chat.server_message_format (Crypt Chat player message format) string <@name> @message
 
 df_crypt_chat.key (Crypt Chat key) string abcedfg
+
+df_crypt_chat.friend_list (Crypt Chat friend list) string

@@ -61,6 +61,37 @@ local char_mapping = {
 	["7"] = 35,
 	["8"] = 36,
 	["9"] = 37,
+	["."] = 38,
+	[","] = 39,
+	[";"] = 40,
+	[":"] = 41,
+	["!"] = 42,
+	A = 43,
+	B = 44,
+	C = 45,
+	D = 46,
+	E = 47,
+	F = 48,
+	G = 49,
+	H = 50,
+	I = 51,
+	J = 52,
+	K = 53,
+	L = 54,
+	M = 55,
+	N = 56,
+	O = 57,
+	P = 58,
+	Q = 59,
+	R = 60,
+	S = 61,
+	T = 62,
+	U = 63,
+	V = 64,
+	W = 65,
+	X = 66,
+	Y = 67,
+	Z = 68,
 }
 
 local function is_allowed(str)
@@ -77,8 +108,8 @@ local function add_chars(char1, char2)
 	local nb1 = char_mapping[char1]
 	local nb2 = char_mapping[char2]
 	local nb = nb1 + nb2
-	if nb > 37 then
-		nb = nb - 37
+	if nb > 68 then
+		nb = nb - 68
 	end
 	for name,int in pairs(char_mapping) do
 		if int == nb then return name end
@@ -90,7 +121,7 @@ local function substract_chars(char1, char2)
 	local nb2 = char_mapping[char2]
 	local nb = nb1 - nb2
 	if nb < 0 then
-		nb = nb + 37
+		nb = nb + 68
 	end
 	for name,int in pairs(char_mapping) do
 		if int == nb then return name end
@@ -142,6 +173,21 @@ minetest.register_on_receiving_chat_message(function(message)
 	end
 end)
 
+minetest.register_on_receiving_chat_message(function(message)
+	local playername, crypted_msg = string.match(message, "DM from (.-): "..prefix.."(.*)")
+	if crypted_msg == nil then
+		return false
+	else
+		if playername == minetest.localplayer:get_name() then
+			return true
+		else
+			local decrypted = df_crypt_chat.decrypt(crypted_msg)
+			minetest.display_chat_message(C("blue", "[CryptChat] RECEIVING PRIVATE("..playername.."): "..decrypted))
+			return true
+		end
+	end
+end)
+
 local form = table.concat({
 	"formspec_version[4]",
 	"size[8,3]",
@@ -149,9 +195,18 @@ local form = table.concat({
 	"label[0.25,2.25;"..F("Crypt Key:").." "..key.."]"
 })
 
+local pform = table.concat({
+	"formspec_version[4]",
+	"size[8,3]",
+	"field[0.25,0.75;7.5,0.75;chat;"..F("CryptChatPrivate")..";]",
+	"label[0.25,2.25;"..F("Crypt Key:").." "..key.."]"
+})
+
 minetest.register_on_formspec_input(function(formname, fields)
 	if formname == "df_crypt_chat:chat_form" and fields.chat then
 		df_crypt_chat.send_msg(fields.chat)
+	elseif formname == "df_crypt_chat:private_chat_form" and fields.chat then
+		df_crypt_chat.send_private_msg(fields.chat)
 	end
 end)
 
@@ -167,8 +222,32 @@ function df_crypt_chat.send_msg(msg)
 	end
 end
 
+function df_crypt_chat.send_private_msg(msg)
+	if msg == "" then
+		minetest.display_chat_message(C("red", "[CryptChat] MESSAGE IS EMPTY:"))
+	elseif is_allowed(msg) then
+		local encrypted = df_crypt_chat.encrypt(msg)
+		local friend_list = minetest.settings:get("df_crypt_chat.friend_list") or ""
+		if friend_list == "" then
+			minetest.display_chat_message(C("red", "[CryptChat] NO CONFIGURED FRIENDS:"))
+			return
+		end
+		local players = friend_list:split(",")
+		for _,name in pairs(players) do
+			minetest.run_server_chatcommand("msg", name.." "..prefix..encrypted)
+		end
+		minetest.display_chat_message(C("blue", "[CryptChat] SENDING PRIVATE ("..friend_list.."): "..msg))
+	else
+		minetest.display_chat_message(C("red", "[CryptChat] MESSAGE CONTAINS BAD CHARS: "..msg))
+	end
+end
+
 function df_crypt_chat.show_form()
 	minetest.show_formspec("df_crypt_chat:chat_form", form)
+end
+
+function df_crypt_chat.show_private_form()
+	minetest.show_formspec("df_crypt_chat:private_chat_form", pform)
 end
 
 minetest.register_chatcommand("crp", {
@@ -179,6 +258,20 @@ minetest.register_chatcommand("crp", {
 	end,
 })
 
+minetest.register_chatcommand("crpp", {
+	params = "<msg>",
+	description = "Crypt and send message to friends",
+	func = function(param)
+		df_crypt_chat.send_private_msg(param)
+	end,
+})
+
+minetest.register_list_command("crp_list", "Configure friends for private crypted messages", "df_crypt_chat.friend_list")
+
 minetest.register_cheat("CryptChat", "Chat", function()
 	df_crypt_chat.show_form()
+end)
+
+minetest.register_cheat("CryptChatPrivate", "Chat", function()
+	df_crypt_chat.show_private_form()
 end)
