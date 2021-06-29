@@ -92,6 +92,9 @@ local char_mapping = {
 	X = 66,
 	Y = 67,
 	Z = 68,
+	["'"] = 69,
+	["("] = 70,
+	[")"] = 71,
 }
 
 local function is_allowed(str)
@@ -108,8 +111,8 @@ local function add_chars(char1, char2)
 	local nb1 = char_mapping[char1]
 	local nb2 = char_mapping[char2]
 	local nb = nb1 + nb2
-	if nb > 68 then
-		nb = nb - 68
+	if nb > 71 then
+		nb = nb - 71
 	end
 	for name,int in pairs(char_mapping) do
 		if int == nb then return name end
@@ -121,7 +124,7 @@ local function substract_chars(char1, char2)
 	local nb2 = char_mapping[char2]
 	local nb = nb1 - nb2
 	if nb < 0 then
-		nb = nb + 68
+		nb = nb + 71
 	end
 	for name,int in pairs(char_mapping) do
 		if int == nb then return name end
